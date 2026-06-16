@@ -1,9 +1,8 @@
 
 import streamlit as st
 import pandas as pd
-import joblib
-from pathlib import Path
 
+# ---------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="Poverty Risk Predictor",
     page_icon="📊",
@@ -13,60 +12,76 @@ st.set_page_config(
 # ---------- CUSTOM CSS ----------
 st.markdown("""
 <style>
-.main {
+
+/* Main App Background */
+.stApp {
     background-color: #0E1117;
+    color: white;
 }
-.stButton>button {
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #161B22;
+}
+
+/* Buttons */
+.stButton > button {
     width: 100%;
     border-radius: 10px;
     height: 3em;
     font-size: 16px;
     font-weight: bold;
-}
-.metric-card {
-    padding: 20px;
-    border-radius: 15px;
-    background: #1E1E1E;
+    background-color: #238636;
     color: white;
-    text-align: center;
+    border: none;
 }
+
+/* Metric Cards */
+[data-testid="metric-container"] {
+    background-color: #1E1E1E;
+    border-radius: 15px;
+    padding: 15px;
+    border: 1px solid #30363D;
+}
+
+/* Headers */
+h1, h2, h3 {
+    color: white;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- LOAD MODEL ----------
-MODEL_PATH = "poverty_trap_model.pkl"
-
-@st.cache_resource
-def load_model():
-    if not Path(MODEL_PATH).exists():
-        st.error("Model file not found.")
-        return None
-
-    try:
-        model = joblib.load(MODEL_PATH)
-        return model
-
-    except Exception as e:
-        st.error(f"Model loading failed: {e}")
-        st.info("Run rebuild_model.py to recreate the model using your current sklearn version.")
-        return None
-
-model = load_model()
-
 # ---------- HEADER ----------
 st.title("📊 Poverty Trap Risk Score Predictor")
-st.markdown("Interactive AI-powered poverty risk prediction dashboard")
+st.markdown(
+    "Interactive AI-powered dashboard for predicting poverty risk levels"
+)
 
 # ---------- SIDEBAR ----------
-st.sidebar.header("User Information")
+st.sidebar.header("📌 User Information")
 
 age = st.sidebar.slider("Age", 18, 70, 30)
 
-education_num = st.sidebar.slider("Education Level (Years)", 1, 16, 10)
+education_num = st.sidebar.slider(
+    "Education Level (Years)",
+    1,
+    16,
+    10
+)
 
-hours_per_week = st.sidebar.slider("Hours Worked Per Week", 1, 80, 40)
+hours_per_week = st.sidebar.slider(
+    "Hours Worked Per Week",
+    1,
+    80,
+    40
+)
 
-capital_gain = st.sidebar.number_input("Capital Gain", min_value=0, value=0)
+capital_gain = st.sidebar.number_input(
+    "Capital Gain",
+    min_value=0,
+    value=0
+)
 
 occupation = st.sidebar.selectbox(
     "Occupation",
@@ -97,8 +112,11 @@ income = st.sidebar.selectbox(
 )
 
 # ---------- FEATURE ENGINEERING ----------
+
 low_education_risk = 1 if education_num <= 9 else 0
+
 underemployment_risk = 1 if hours_per_week < 30 else 0
+
 wealth_risk = 1 if capital_gain == 0 else 0
 
 low_income_jobs = [
@@ -116,9 +134,11 @@ unstable_status = [
     "Divorced"
 ]
 
-family_instability_risk = 1 if marital_status in unstable_status else 0
+family_instability_risk = (
+    1 if marital_status in unstable_status else 0
+)
 
-# ---------- PREDICT ----------
+# ---------- PREDICTION ----------
 if st.button("🚀 Predict Poverty Risk"):
 
     poverty_score = (
@@ -132,30 +152,48 @@ if st.button("🚀 Predict Poverty Risk"):
     if income == "<=50K":
         poverty_score += 35
 
+    # ---------- RISK LEVEL ----------
     if poverty_score >= 70:
-        risk = "High Risk"
-        recommendation = "Needs urgent financial and employment support."
+        risk = "🔴 High Risk"
+        recommendation = (
+            "Needs urgent financial and employment support."
+        )
 
     elif poverty_score >= 40:
-        risk = "Moderate Risk"
-        recommendation = "Moderate support and skill development recommended."
+        risk = "🟠 Moderate Risk"
+        recommendation = (
+            "Skill development and financial assistance recommended."
+        )
 
     else:
-        risk = "Low Risk"
-        recommendation = "Financial condition appears relatively stable."
+        risk = "🟢 Low Risk"
+        recommendation = (
+            "Financial condition appears relatively stable."
+        )
 
+    # ---------- DISPLAY METRICS ----------
     col1, col2 = st.columns(2)
 
     with col1:
-        st.metric("Predicted Poverty Score", poverty_score)
+        st.metric(
+            label="Predicted Poverty Score",
+            value=f"{poverty_score}/100"
+        )
 
     with col2:
-        st.metric("Risk Category", risk)
+        st.metric(
+            label="Risk Category",
+            value=risk
+        )
 
+    # ---------- PROGRESS BAR ----------
+    st.subheader("Risk Level")
     st.progress(min(poverty_score / 100, 1.0))
 
+    # ---------- RECOMMENDATION ----------
     st.success(recommendation)
 
+    # ---------- CHART ----------
     chart_data = pd.DataFrame({
         "Factor": [
             "Education",
@@ -174,8 +212,15 @@ if st.button("🚀 Predict Poverty Risk"):
     })
 
     st.subheader("📈 Risk Factor Contribution")
-    st.bar_chart(chart_data.set_index("Factor"))
+
+    st.bar_chart(
+        chart_data.set_index("Factor")
+    )
 
 # ---------- FOOTER ----------
 st.markdown("---")
-st.caption("Built using Streamlit + Machine Learning")
+
+st.caption(
+    "Built using Streamlit + Machine Learning Concepts"
+)
+
